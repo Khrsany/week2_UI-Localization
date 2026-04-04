@@ -5,50 +5,18 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-
 import java.text.MessageFormat;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 public class CalculatorController {
 
-    @FXML
-    private Label lblDistance;
+    @FXML private Label lblDistance, lblConsumption, lblPrice, lblResult;
+    @FXML private TextField txtDistance, txtConsumption, txtPrice;
+    @FXML private Button btnCalculate, btnEN, btnFR, btnJP, btnIR;
 
-    @FXML
-    private Label lblConsumption;
-
-    @FXML
-    private Label lblPrice;
-
-    @FXML
-    private Label lblResult;
-
-    @FXML
-    private TextField txtDistance;
-
-    @FXML
-    private TextField txtConsumption;
-
-    @FXML
-    private TextField txtPrice;
-
-    @FXML
-    private Button btnCalculate;
-
-    @FXML
-    private Button btnEN;
-
-    @FXML
-    private Button btnFR;
-
-    @FXML
-    private Button btnJP;
-
-    @FXML
-    private Button btnIR;
-
-    private ResourceBundle bundle;
+    private LocalizationService localizationService = new LocalizationService();
+    private CalculationService calculationService = new CalculationService();
+    private String currentLanguage = "en";
 
     @FXML
     public void initialize() {
@@ -65,46 +33,30 @@ public class CalculatorController {
             double totalFuel = (consumption / 100.0) * distance;
             double totalCost = totalFuel * price;
 
-            String resultText = MessageFormat.format(
-                    bundle.getString("result.label"),
-                    totalFuel,
-                    totalCost
-            );
-
+            String resultTemplate = localizationService.getString("result.label");
+            String resultText = MessageFormat.format(resultTemplate, totalFuel, totalCost);
             lblResult.setText(resultText);
 
+            calculationService.saveCalculation(distance, consumption, price, totalFuel, totalCost, currentLanguage);
+
         } catch (Exception e) {
-            lblResult.setText(bundle.getString("invalid.input"));
+            lblResult.setText(localizationService.getString("invalid.input"));
         }
     }
 
-    @FXML
-    private void switchToEnglish(ActionEvent event) {
-        setLanguage(new Locale("en", "US"));
-    }
-
-    @FXML
-    private void switchToFrench(ActionEvent event) {
-        setLanguage(new Locale("fr", "FR"));
-    }
-
-    @FXML
-    private void switchToJapanese(ActionEvent event) {
-        setLanguage(new Locale("ja", "JP"));
-    }
-
-    @FXML
-    private void switchToPersian(ActionEvent event) {
-        setLanguage(new Locale("fa", "IR"));
-    }
+    @FXML private void switchToEnglish(ActionEvent event) { setLanguage(new Locale("en", "US")); }
+    @FXML private void switchToFrench(ActionEvent event) { setLanguage(new Locale("fr", "FR")); }
+    @FXML private void switchToJapanese(ActionEvent event) { setLanguage(new Locale("ja", "JP")); }
+    @FXML private void switchToPersian(ActionEvent event) { setLanguage(new Locale("fa", "IR")); }
 
     private void setLanguage(Locale locale) {
-        bundle = ResourceBundle.getBundle("org.example.messages", locale);
+        currentLanguage = locale.getLanguage();
+        localizationService.loadStrings(currentLanguage);
 
-        lblDistance.setText(bundle.getString("distance.label"));
-        lblConsumption.setText(bundle.getString("consumption.label"));
-        lblPrice.setText(bundle.getString("price.label"));
-        btnCalculate.setText(bundle.getString("calculate.button"));
-        lblResult.setText(bundle.getString("result.placeholder"));
+        lblDistance.setText(localizationService.getString("distance.label"));
+        lblConsumption.setText(localizationService.getString("consumption.label"));
+        lblPrice.setText(localizationService.getString("price.label"));
+        btnCalculate.setText(localizationService.getString("calculate.button"));
+        lblResult.setText(localizationService.getString("result.placeholder"));
     }
 }
