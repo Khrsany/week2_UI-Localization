@@ -24,7 +24,7 @@ public class CalculatorController {
     }
 
     @FXML
-    void calculate(ActionEvent event) {
+    private void calculate(ActionEvent event) {
         try {
             double distance = Double.parseDouble(txtDistance.getText());
             double consumption = Double.parseDouble(txtConsumption.getText());
@@ -58,8 +58,5 @@ public class CalculatorController {
         lblPrice.setText(localizationService.getString("price.label"));
         btnCalculate.setText(localizationService.getString("calculate.button"));
         lblResult.setText(localizationService.getString("result.placeholder"));
-    }
-
-    public void calculate(int i, int i1, double v) {
     }
 }
