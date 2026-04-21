@@ -4,16 +4,17 @@ FROM maven:3.9.6-eclipse-temurin-17
 # Asetetaan työskentelyhakemisto kontin sisällä
 WORKDIR /app
 
-# Kopioidaan pom.xml ja asennetaan riippuvuudet (nopeuttaa seuraavia build-kertoja)
-COPY pom.xml .
+# Kopioidaan pom.xml alikansiosta
+COPY UI-Localization/pom.xml .
+
+# Ladataan riippuvuudet valmiiksi
 RUN mvn dependency:go-offline
 
-# Kopioidaan lähdekoodit
-COPY src ./src
+# Kopioidaan lähdekoodit alikansiosta
+COPY UI-Localization/src ./src
 
-# Rakennetaan sovellus jar-tiedostoksi (skitataan testit nopeuden takia)
+# Rakennetaan sovellus jar-tiedostoksi
 RUN mvn clean package -DskipTests
 
-# Määritetään komento, joka kertoo miten sovellus ajettaisiin 
-# (JavaFX:n tapauksessa tämä on usein dokumentatiivinen Dockerissa)
+# Määritetään komento sovelluksen ajamiseen
 CMD ["mvn", "javafx:run"]

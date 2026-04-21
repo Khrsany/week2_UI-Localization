@@ -1,47 +1,68 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven'
-        jdk 'JDK17'
-    }
-
-    environment {
-        // Määritetään tietokantatiedot ympäristömuuttujina tehtävänannon mukaan
-        DB_URL = "jdbc:mariadb://localhost:3306/fuel_calculator_localization"
-        DB_USER = "root"
-        DB_PASS = "Abbuusi"
-    }
-
     stages {
-        stage('Fetch Code') {
+
+        stage('Checkout') {
             steps {
-                // Haetaan koodi repositoriosta
-                checkout scm
+                git branch: 'main', url: 'https://github.com/Khrsany/week2_UI-Localization.git'
             }
         }
 
-        stage('Build and Compile') {
+        stage('Check Environment') {
             steps {
-                // Tehdään puhdistus ja käännös
-                bat 'mvn clean compile'
+                bat 'java -version'
+                bat 'mvn -version'
             }
         }
 
-        stage('Create Package') {
+        stage('Build & Test') {
             steps {
-                // Luodaan lopullinen jar-tiedosto ja hypätään testien yli jos niitä ei ole
-                bat 'mvn package -DskipTests'
+                dir('UI-Localization') {
+                    bat 'mvn clean verify'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
+                    dir('UI-Localization') {
+                        bat '''
+                        mvn org.sonarsource.scanner.maven:sonar-maven-plugin:4.0.0.4121:sonar ^
+                        -Dsonar.host.url=http://localhost:9000 ^
+                        -Dsonar.token=%SONAR_TOKEN% ^
+                        -Dsonar.projectKey=fuelcalculator
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t alabassa/fuelcalculator:latest .'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'DOCKERHUB_CREDS', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat '''
+                    echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                    docker push alabassa/fuelcalculator:latest
+                    '''
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'Build valmistui onnistuneesti!'
+            echo 'Pipeline onnistui.'
         }
         failure {
-            echo 'Build epäonnistui, tarkista lokit.'
+            echo 'Pipeline epäonnistui. Tarkista loki.'
         }
     }
 }
