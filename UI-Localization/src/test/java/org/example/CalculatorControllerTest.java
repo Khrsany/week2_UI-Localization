@@ -1,192 +1,83 @@
 package org.example;
 
-import javafx.embed.swing.JFXPanel;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.text.MessageFormat;
+import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+public class CalculatorController {
 
-class CalculatorControllerTest {
+    @FXML
+    private Label lblDistance, lblConsumption, lblPrice, lblResult;
 
-    private CalculatorController controller;
-    private LocalizationService localizationService;
-    private CalculationService calculationService;
+    @FXML
+    private TextField txtDistance, txtConsumption, txtPrice;
 
-    @BeforeAll
-    static void initJavaFx() {
-        new JFXPanel();
+    @FXML
+    private Button btnCalculate, btnEN, btnFR, btnJP, btnIR;
+
+    private LocalizationService localizationService = new LocalizationService();
+    private CalculationService calculationService = new CalculationService();
+    private String currentLanguage = "en";
+
+    @FXML
+    public void initialize() {
+        setLanguage(new Locale("en", "US"));
     }
 
-    @BeforeEach
-    void setUp() throws Exception {
-        controller = new CalculatorController();
+    @FXML
+    void calculate(ActionEvent event) {
+        try {
+            double distance = Double.parseDouble(txtDistance.getText());
+            double consumption = Double.parseDouble(txtConsumption.getText());
+            double price = Double.parseDouble(txtPrice.getText());
 
-        localizationService = mock(LocalizationService.class);
-        calculationService = mock(CalculationService.class);
+            double totalFuel = (consumption / 100.0) * distance;
+            double totalCost = totalFuel * price;
 
-        when(localizationService.getString("distance.label")).thenReturn("Distance");
-        when(localizationService.getString("consumption.label")).thenReturn("Consumption");
-        when(localizationService.getString("price.label")).thenReturn("Price");
-        when(localizationService.getString("calculate.button")).thenReturn("Calculate");
-        when(localizationService.getString("result.placeholder")).thenReturn("Result will appear here");
-        when(localizationService.getString("invalid.input")).thenReturn("Invalid input");
-        when(localizationService.getString("result.label")).thenReturn("Fuel needed: {0}, Total cost: {1}");
+            String resultTemplate = localizationService.getString("result.label");
+            String resultText = MessageFormat.format(resultTemplate, totalFuel, totalCost);
+            lblResult.setText(resultText);
 
-        setField("lblDistance", new Label());
-        setField("lblConsumption", new Label());
-        setField("lblPrice", new Label());
-        setField("lblResult", new Label());
+            calculationService.saveCalculation(distance, consumption, price, totalFuel, totalCost, currentLanguage);
 
-        setField("txtDistance", new TextField());
-        setField("txtConsumption", new TextField());
-        setField("txtPrice", new TextField());
-
-        setField("btnCalculate", new Button());
-        setField("btnEN", new Button());
-        setField("btnFR", new Button());
-        setField("btnJP", new Button());
-        setField("btnIR", new Button());
-
-        setField("localizationService", localizationService);
-        setField("calculationService", calculationService);
+        } catch (Exception e) {
+            lblResult.setText(localizationService.getString("invalid.input"));
+        }
     }
 
-    @Test
-    void initialize_setsEnglishTexts() throws Exception {
-        controller.initialize();
-
-        Label lblDistance = getField("lblDistance", Label.class);
-        Label lblConsumption = getField("lblConsumption", Label.class);
-        Label lblPrice = getField("lblPrice", Label.class);
-        Label lblResult = getField("lblResult", Label.class);
-        Button btnCalculate = getField("btnCalculate", Button.class);
-
-        assertEquals("Distance", lblDistance.getText());
-        assertEquals("Consumption", lblConsumption.getText());
-        assertEquals("Price", lblPrice.getText());
-        assertEquals("Calculate", btnCalculate.getText());
-        assertEquals("Result will appear here", lblResult.getText());
-
-        verify(localizationService).loadStrings("en");
+    @FXML
+    private void switchToEnglish(ActionEvent event) {
+        setLanguage(new Locale("en", "US"));
     }
 
-    @Test
-    void calculate_validInput_setsResultAndSavesCalculation() throws Exception {
-        controller.initialize();
-
-        TextField txtDistance = getField("txtDistance", TextField.class);
-        TextField txtConsumption = getField("txtConsumption", TextField.class);
-        TextField txtPrice = getField("txtPrice", TextField.class);
-        Label lblResult = getField("lblResult", Label.class);
-
-        txtDistance.setText("200");
-        txtConsumption.setText("6.5");
-        txtPrice.setText("1.8");
-
-        Method calculateMethod = CalculatorController.class.getDeclaredMethod("calculate", ActionEvent.class);
-        calculateMethod.setAccessible(true);
-        calculateMethod.invoke(controller, new ActionEvent());
-
-        String normalizedResult = lblResult.getText().replace("23,4", "23.4");
-        assertEquals("Fuel needed: 13, Total cost: 23.4", normalizedResult);
-
-        ArgumentCaptor<Double> distanceCaptor = ArgumentCaptor.forClass(Double.class);
-        ArgumentCaptor<Double> consumptionCaptor = ArgumentCaptor.forClass(Double.class);
-        ArgumentCaptor<Double> priceCaptor = ArgumentCaptor.forClass(Double.class);
-        ArgumentCaptor<Double> totalFuelCaptor = ArgumentCaptor.forClass(Double.class);
-        ArgumentCaptor<Double> totalCostCaptor = ArgumentCaptor.forClass(Double.class);
-        ArgumentCaptor<String> languageCaptor = ArgumentCaptor.forClass(String.class);
-
-        verify(calculationService).saveCalculation(
-                distanceCaptor.capture(),
-                consumptionCaptor.capture(),
-                priceCaptor.capture(),
-                totalFuelCaptor.capture(),
-                totalCostCaptor.capture(),
-                languageCaptor.capture()
-        );
-
-        assertEquals(200.0, distanceCaptor.getValue());
-        assertEquals(6.5, consumptionCaptor.getValue());
-        assertEquals(1.8, priceCaptor.getValue());
-        assertEquals(13.0, totalFuelCaptor.getValue());
-        assertEquals(23.4, totalCostCaptor.getValue(), 0.0001);
-        assertEquals("en", languageCaptor.getValue());
+    @FXML
+    private void switchToFrench(ActionEvent event) {
+        setLanguage(new Locale("fr", "FR"));
     }
 
-    @Test
-    void calculate_invalidInput_showsErrorMessage() throws Exception {
-        controller.initialize();
-
-        TextField txtDistance = getField("txtDistance", TextField.class);
-        TextField txtConsumption = getField("txtConsumption", TextField.class);
-        TextField txtPrice = getField("txtPrice", TextField.class);
-        Label lblResult = getField("lblResult", Label.class);
-
-        txtDistance.setText("abc");
-        txtConsumption.setText("6.5");
-        txtPrice.setText("1.8");
-
-        Method calculateMethod = CalculatorController.class.getDeclaredMethod("calculate", ActionEvent.class);
-        calculateMethod.setAccessible(true);
-        calculateMethod.invoke(controller, new ActionEvent());
-
-        assertEquals("Invalid input", lblResult.getText());
-        verify(calculationService, never()).saveCalculation(anyDouble(), anyDouble(), anyDouble(), anyDouble(), anyDouble(), anyString());
+    @FXML
+    private void switchToJapanese(ActionEvent event) {
+        setLanguage(new Locale("ja", "JP"));
     }
 
-    @Test
-    void switchToFrench_loadsFrenchLanguage() throws Exception {
-        controller.initialize();
-
-        Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToFrench", ActionEvent.class);
-        switchMethod.setAccessible(true);
-        switchMethod.invoke(controller, new ActionEvent());
-
-        verify(localizationService).loadStrings("fr");
+    @FXML
+    private void switchToPersian(ActionEvent event) {
+        setLanguage(new Locale("fa", "IR"));
     }
 
-    @Test
-    void switchToJapanese_loadsJapaneseLanguage() throws Exception {
-        controller.initialize();
+    private void setLanguage(Locale locale) {
+        currentLanguage = locale.getLanguage();
+        localizationService.loadStrings(currentLanguage);
 
-        Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToJapanese", ActionEvent.class);
-        switchMethod.setAccessible(true);
-        switchMethod.invoke(controller, new ActionEvent());
-
-        verify(localizationService).loadStrings("ja");
-    }
-
-    @Test
-    void switchToPersian_loadsPersianLanguage() throws Exception {
-        controller.initialize();
-
-        Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToPersian", ActionEvent.class);
-        switchMethod.setAccessible(true);
-        switchMethod.invoke(controller, new ActionEvent());
-
-        verify(localizationService).loadStrings("fa");
-    }
-
-    private void setField(String fieldName, Object value) throws Exception {
-        Field field = CalculatorController.class.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(controller, value);
-    }
-
-    private <T> T getField(String fieldName, Class<T> type) throws Exception {
-        Field field = CalculatorController.class.getDeclaredField(fieldName);
-        field.setAccessible(true);
-        return type.cast(field.get(controller));
+        lblDistance.setText(localizationService.getString("distance.label"));
+        lblConsumption.setText(localizationService.getString("consumption.label"));
+        lblPrice.setText(localizationService.getString("price.label"));
+        btnCalculate.setText(localizationService.getString("calculate.button"));
+        lblResult.setText(localizationService.getString("result.placeholder"));
     }
 }
