@@ -12,11 +12,15 @@ public class LocalizationService {
     private Map<String, String> cache = new HashMap<>();
     private static final String SELECT_QUERY = "SELECT `key`, value FROM localization_strings WHERE language = ?";
 
+    protected Connection getConnection() throws SQLException {
+        return DatabaseConnection.getConnection();
+    }
+
     public void loadStrings(String language) {
         cache.clear();
         System.out.println("--- Ladataan kieltä: " + language + " ---");
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SELECT_QUERY)) {
 
             pstmt.setString(1, language);

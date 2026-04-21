@@ -8,6 +8,8 @@ import javafx.scene.control.TextField;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Field;
@@ -187,52 +189,22 @@ class CalculatorControllerTest {
         assertNotNull(lblResult.getText());
     }
 
-    @Test
-    void switchToFrench_loadsFrenchLanguage() throws Exception {
+    @ParameterizedTest
+    @CsvSource({
+            "switchToEnglish,en",
+            "switchToFrench,fr",
+            "switchToJapanese,ja",
+            "switchToPersian,fa"
+    })
+    void switchLanguage_loadsCorrectLanguage(String methodName, String expectedLanguage) throws Exception {
         controller.initialize();
         clearInvocations(localizationService);
 
-        Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToFrench", ActionEvent.class);
+        Method switchMethod = CalculatorController.class.getDeclaredMethod(methodName, ActionEvent.class);
         switchMethod.setAccessible(true);
         switchMethod.invoke(controller, new ActionEvent());
 
-        verify(localizationService).loadStrings("fr");
-    }
-
-    @Test
-    void switchToJapanese_loadsJapaneseLanguage() throws Exception {
-        controller.initialize();
-        clearInvocations(localizationService);
-
-        Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToJapanese", ActionEvent.class);
-        switchMethod.setAccessible(true);
-        switchMethod.invoke(controller, new ActionEvent());
-
-        verify(localizationService).loadStrings("ja");
-    }
-
-    @Test
-    void switchToPersian_loadsPersianLanguage() throws Exception {
-        controller.initialize();
-        clearInvocations(localizationService);
-
-        Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToPersian", ActionEvent.class);
-        switchMethod.setAccessible(true);
-        switchMethod.invoke(controller, new ActionEvent());
-
-        verify(localizationService).loadStrings("fa");
-    }
-
-    @Test
-    void switchToEnglish_loadsEnglishLanguage() throws Exception {
-        controller.initialize();
-        clearInvocations(localizationService);
-
-        Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToEnglish", ActionEvent.class);
-        switchMethod.setAccessible(true);
-        switchMethod.invoke(controller, new ActionEvent());
-
-        verify(localizationService).loadStrings("en");
+        verify(localizationService).loadStrings(expectedLanguage);
     }
 
     @Test

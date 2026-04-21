@@ -4,12 +4,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 class LocalizationServiceTest {
 
@@ -48,8 +53,42 @@ class LocalizationServiceTest {
     }
 
     @Test
+    void loadStrings_loadsValuesSuccessfully() throws Exception {
+        Connection conn = mock(Connection.class);
+        PreparedStatement pstmt = mock(PreparedStatement.class);
+        ResultSet rs = mock(ResultSet.class);
+
+        when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+        when(pstmt.executeQuery()).thenReturn(rs);
+        when(rs.next()).thenReturn(true, true, false);
+        when(rs.getString("key")).thenReturn("distance.label", "price.label");
+        when(rs.getString("value")).thenReturn("Distance", "Price");
+
+        LocalizationService service = new LocalizationService() {
+            @Override
+            protected Connection getConnection() {
+                return conn;
+            }
+        };
+
+        service.loadStrings("en");
+
+        assertEquals("Distance", service.getString("distance.label"));
+        assertEquals("Price", service.getString("price.label"));
+        assertEquals(2, service.getAllKeys().size());
+
+        verify(pstmt).setString(1, "en");
+        verify(pstmt).executeQuery();
+    }
+
+    @Test
     void loadStrings_handlesSQLException_andClearsCache() {
-        LocalizationService service = new LocalizationService();
+        LocalizationService service = new LocalizationService() {
+            @Override
+            protected Connection getConnection() throws SQLException {
+                throw new SQLException("Database password is missing. Set DB_PASS environment variable.");
+            }
+        };
 
         assertTrue(service.getAllKeys().isEmpty());
 
@@ -60,7 +99,20 @@ class LocalizationServiceTest {
 
     @Test
     void loadStrings_clearsExistingCacheBeforeLoading() throws Exception {
-        LocalizationService service = new LocalizationService();
+        Connection conn = mock(Connection.class);
+        PreparedStatement pstmt = mock(PreparedStatement.class);
+        ResultSet rs = mock(ResultSet.class);
+
+        when(conn.prepareStatement(anyString())).thenReturn(pstmt);
+        when(pstmt.executeQuery()).thenReturn(rs);
+        when(rs.next()).thenReturn(false);
+
+        LocalizationService service = new LocalizationService() {
+            @Override
+            protected Connection getConnection() {
+                return conn;
+            }
+        };
 
         Field cacheField = LocalizationService.class.getDeclaredField("cache");
         cacheField.setAccessible(true);
