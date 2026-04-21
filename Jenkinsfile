@@ -3,17 +3,20 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/Khrsany/week2_UI-Localization.git'
-            }
-        }
 
         stage('TEST STAGE') {
             steps {
                 echo 'THIS IS NEW JENKINSFILE'
             }
         }
+
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Khrsany/week2_UI-Localization.git'
+            }
+        }
+
 
         stage('Check Environment') {
             steps {
