@@ -14,6 +14,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 class CalculatorControllerTest {
@@ -148,6 +149,7 @@ class CalculatorControllerTest {
     @Test
     void switchToFrench_loadsFrenchLanguage() throws Exception {
         controller.initialize();
+        clearInvocations(localizationService);
 
         Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToFrench", ActionEvent.class);
         switchMethod.setAccessible(true);
@@ -159,6 +161,7 @@ class CalculatorControllerTest {
     @Test
     void switchToJapanese_loadsJapaneseLanguage() throws Exception {
         controller.initialize();
+        clearInvocations(localizationService);
 
         Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToJapanese", ActionEvent.class);
         switchMethod.setAccessible(true);
@@ -170,12 +173,58 @@ class CalculatorControllerTest {
     @Test
     void switchToPersian_loadsPersianLanguage() throws Exception {
         controller.initialize();
+        clearInvocations(localizationService);
 
         Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToPersian", ActionEvent.class);
         switchMethod.setAccessible(true);
         switchMethod.invoke(controller, new ActionEvent());
 
         verify(localizationService).loadStrings("fa");
+    }
+
+    @Test
+    void switchToEnglish_loadsEnglishLanguage() throws Exception {
+        controller.initialize();
+        clearInvocations(localizationService);
+
+        Method switchMethod = CalculatorController.class.getDeclaredMethod("switchToEnglish", ActionEvent.class);
+        switchMethod.setAccessible(true);
+        switchMethod.invoke(controller, new ActionEvent());
+
+        verify(localizationService).loadStrings("en");
+    }
+
+    @Test
+    void initialize_setsLabelsNotNull() throws Exception {
+        controller.initialize();
+
+        Label lblDistance = getField("lblDistance", Label.class);
+        Label lblConsumption = getField("lblConsumption", Label.class);
+        Label lblPrice = getField("lblPrice", Label.class);
+
+        assertNotNull(lblDistance.getText());
+        assertNotNull(lblConsumption.getText());
+        assertNotNull(lblPrice.getText());
+    }
+
+    @Test
+    void calculate_edgeCase_zeroValues() throws Exception {
+        controller.initialize();
+
+        TextField txtDistance = getField("txtDistance", TextField.class);
+        TextField txtConsumption = getField("txtConsumption", TextField.class);
+        TextField txtPrice = getField("txtPrice", TextField.class);
+        Label lblResult = getField("lblResult", Label.class);
+
+        txtDistance.setText("0");
+        txtConsumption.setText("0");
+        txtPrice.setText("0");
+
+        Method calculateMethod = CalculatorController.class.getDeclaredMethod("calculate", ActionEvent.class);
+        calculateMethod.setAccessible(true);
+        calculateMethod.invoke(controller, new ActionEvent());
+
+        assertNotNull(lblResult.getText());
     }
 
     private void setField(String fieldName, Object value) throws Exception {
