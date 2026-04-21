@@ -9,6 +9,12 @@ pipeline {
             }
         }
 
+        stage('TEST STAGE') {
+            steps {
+                echo 'THIS IS NEW JENKINSFILE'
+            }
+        }
+
         stage('Check Environment') {
             steps {
                 bat 'java -version'
