@@ -41,11 +41,9 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-          steps {
-              dir('UI-Localization') {
-                 bat 'docker build -t alabassa/fuelcalculator:latest .'
-             }
-          }
+            steps {
+                bat 'docker build -t alabassa/fuelcalculator:latest .'
+            }
         }
 
         stage('Push Docker Image') {
