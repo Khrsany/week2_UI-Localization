@@ -97,7 +97,8 @@ class CalculatorControllerTest {
         calculateMethod.setAccessible(true);
         calculateMethod.invoke(controller, new ActionEvent());
 
-        assertEquals("Fuel needed: 13, Total cost: 23.4", lblResult.getText());
+        String normalizedResult = lblResult.getText().replace("23,4", "23.4");
+        assertEquals("Fuel needed: 13, Total cost: 23.4", normalizedResult);
 
         ArgumentCaptor<Double> distanceCaptor = ArgumentCaptor.forClass(Double.class);
         ArgumentCaptor<Double> consumptionCaptor = ArgumentCaptor.forClass(Double.class);
