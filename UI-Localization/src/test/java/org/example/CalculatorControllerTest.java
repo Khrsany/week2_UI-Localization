@@ -147,6 +147,47 @@ class CalculatorControllerTest {
     }
 
     @Test
+    void calculate_emptyInput_showsErrorMessage() throws Exception {
+        controller.initialize();
+
+        TextField txtDistance = getField("txtDistance", TextField.class);
+        TextField txtConsumption = getField("txtConsumption", TextField.class);
+        TextField txtPrice = getField("txtPrice", TextField.class);
+        Label lblResult = getField("lblResult", Label.class);
+
+        txtDistance.setText("");
+        txtConsumption.setText("");
+        txtPrice.setText("");
+
+        Method calculateMethod = CalculatorController.class.getDeclaredMethod("calculate", ActionEvent.class);
+        calculateMethod.setAccessible(true);
+        calculateMethod.invoke(controller, new ActionEvent());
+
+        assertEquals("Invalid input", lblResult.getText());
+        verify(calculationService, never()).saveCalculation(anyDouble(), anyDouble(), anyDouble(), anyDouble(), anyDouble(), anyString());
+    }
+
+    @Test
+    void calculate_negativeValues_handlesInput() throws Exception {
+        controller.initialize();
+
+        TextField txtDistance = getField("txtDistance", TextField.class);
+        TextField txtConsumption = getField("txtConsumption", TextField.class);
+        TextField txtPrice = getField("txtPrice", TextField.class);
+        Label lblResult = getField("lblResult", Label.class);
+
+        txtDistance.setText("-100");
+        txtConsumption.setText("5");
+        txtPrice.setText("2");
+
+        Method calculateMethod = CalculatorController.class.getDeclaredMethod("calculate", ActionEvent.class);
+        calculateMethod.setAccessible(true);
+        calculateMethod.invoke(controller, new ActionEvent());
+
+        assertNotNull(lblResult.getText());
+    }
+
+    @Test
     void switchToFrench_loadsFrenchLanguage() throws Exception {
         controller.initialize();
         clearInvocations(localizationService);
